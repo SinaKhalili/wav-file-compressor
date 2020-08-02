@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
+import wave
 
 
 class Root(Tk):
@@ -40,6 +41,26 @@ class Root(Tk):
         self.label = ttk.Label(self.labelFrame, text="")
         self.label.grid(column=1, row=2)
         self.label.configure(text=self.filename)
+        if self.filename:
+            self.get_wave_info(self.filename)
+
+    def get_wave_info(self, filename):
+        """
+        Print some information about the wav file
+        """
+        info_string = ""
+        try:
+            with wave.open(filename) as wav_file:
+                info_string = f"""
+Number of channels : {wav_file.getnchannels()}
+Framerate: {wav_file.getframerate()}
+Number of frames{wav_file.getnframes()}
+                """
+            self.info_label = ttk.Label(self.labelFrame, text="")
+            self.info_label.grid(column=1, row=3)
+            self.info_label.configure(text=info_string)
+        except wave.Error as err:
+            print("Could not read wave file")
 
 
 if __name__ == "__main__":
