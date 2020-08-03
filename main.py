@@ -1,7 +1,9 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
-from huffman import get_message
+import math
+import huffman
+import lzw
 import wave
 
 
@@ -63,10 +65,16 @@ Size of wave data (bits): {wav_data_size_bits}
                 wav_file.rewind()
                 wav_samples = wav_file.readframes(wav_file.getnframes())
 
-                self.labelFrame_huffman = ttk.LabelFrame(self, text="HUFFMAN RESULTS:")
-                self.labelFrame_huffman.grid(column=0, row=2, padx=20, pady=20)
+                wav_samples = [
+                    wav_samples[i : i + 2] for i in range(0, len(wav_samples), 2)
+                ]
 
-                huffman_samples = get_message(wav_samples)
+                self.labelFrame_huffman = ttk.LabelFrame(self, text="HUFFMAN RESULTS:")
+                self.labelFrame_huffman.grid(
+                    column=0, row=2, padx=40, pady=40, ipadx=40, ipady=40
+                )
+
+                huffman_samples = huffman.get_message(wav_samples)
                 huffman_stats = f"""
 The resulting huffman encoded wave data is:
                 {len(huffman_samples)} bits long.
@@ -80,9 +88,31 @@ With a ratio of:
                 self.huffman_label.grid(column=1, row=3)
                 self.huffman_label.configure(text=huffman_stats)
 
+                self.labelFrame_lzw = ttk.LabelFrame(self, text="LZW RESULTS:")
+                self.labelFrame_lzw.grid(
+                    column=1, row=2, padx=40, pady=40, ipadx=40, ipady=40
+                )
+
+                lzw_samples = len(lzw.get_message(wav_samples))
+                lzw_samples *= 16
+
+                lzw_stats = f"""
+The resulting lzw encoded wave data is:
+                {lzw_samples} bits long, if we use 16 bits for numbers.
+This results in a:
+                {round((1 - lzw_samples / wav_data_size_bits) * 100, 2)}% decrease in size if we use 16 bits per number
+With a ratio of:
+                1:{round(lzw_samples  / wav_data_size_bits, 2)} Orignal-to-compressed if we use 16 bits per number
+                """
+
+                self.lzw_label = ttk.Label(self.labelFrame_lzw, text="")
+                self.lzw_label.grid(column=1, row=3)
+                self.lzw_label.configure(text=lzw_stats)
+
             self.info_label = ttk.Label(self.labelFrame, text="")
             self.info_label.grid(column=1, row=3)
             self.info_label.configure(text=info_string)
+
         except wave.Error as err:
             print("Could not read wave file")
 
