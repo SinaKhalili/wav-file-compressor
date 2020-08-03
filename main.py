@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
+from huffman import get_message
 import wave
 
 
@@ -51,11 +52,34 @@ class Root(Tk):
         info_string = ""
         try:
             with wave.open(filename) as wav_file:
+                wav_data_size_bits = wav_file.getnframes() * wav_file.getsampwidth() * 8
                 info_string = f"""
 Number of channels : {wav_file.getnchannels()}
 Framerate: {wav_file.getframerate()}
 Number of frames: {wav_file.getnframes()}
+Sample width (in bytes): {wav_file.getsampwidth()}
+Size of wave data (bits): {wav_data_size_bits}
                 """
+                wav_file.rewind()
+                wav_samples = wav_file.readframes(wav_file.getnframes())
+
+                self.labelFrame_huffman = ttk.LabelFrame(self, text="HUFFMAN RESULTS:")
+                self.labelFrame_huffman.grid(column=0, row=2, padx=20, pady=20)
+
+                huffman_samples = get_message(wav_samples)
+                huffman_stats = f"""
+The resulting huffman encoded wave data is:
+                {len(huffman_samples)} bits long.
+This results in a:
+                {round(1 - len(huffman_samples) / wav_data_size_bits, 2) * 100}% decrease in size
+With a ratio of:
+                1:{round(len(huffman_samples) / wav_data_size_bits, 2)} Orignal-to-compressed
+                """
+
+                self.huffman_label = ttk.Label(self.labelFrame_huffman, text="")
+                self.huffman_label.grid(column=1, row=3)
+                self.huffman_label.configure(text=huffman_stats)
+
             self.info_label = ttk.Label(self.labelFrame, text="")
             self.info_label.grid(column=1, row=3)
             self.info_label.configure(text=info_string)
